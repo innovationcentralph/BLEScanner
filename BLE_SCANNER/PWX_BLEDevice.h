@@ -3,7 +3,7 @@
 #define PWX_BLEDEVICE_H
 
 #include <BLEDevice.h>
-#include "DeviceType.h"
+#include "SensorData.h"
 
 // Define a struct for each device in the whitelist
 struct PWX_BLEDevice {

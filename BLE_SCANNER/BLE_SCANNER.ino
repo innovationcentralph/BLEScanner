@@ -1,27 +1,44 @@
 #include <Arduino.h>
-#include <BLEDevice.h>
-#include "AdvertisedDeviceCallbacks.h"
-
-int scanTime = 5;  // In seconds
-BLEScan *pBLEScan;
+#include <Wire.h>
+#include "SensorData.h"
+#include "I2CSlaveHandler.h"
+#include "BLEScanHandler.h"
 
 void setup() {
-  Serial.begin(115200);
-  Serial.println("Scanning...");
+    Serial.begin(115200);
+    Serial.println("Setting up...");
 
-  BLEDevice::init("");
-  pBLEScan = BLEDevice::getScan();  // create new scan
-  pBLEScan->setAdvertisedDeviceCallbacks(new AdvertisedDeviceCallbacks());
-  pBLEScan->setActiveScan(true);  // active scan uses more power, but get results faster
-  pBLEScan->setInterval(100);
-  pBLEScan->setWindow(99);  // less or equal setInterval value
+    initializeBLEScan();  // Initialize BLE scanning
+
+    // Initialize mutex
+    sensorDataMutex = xSemaphoreCreateMutex();
+    if (sensorDataMutex == NULL) {
+        Serial.println("Failed to create sensor data mutex.");
+    }
+
+    // Create a FreeRTOS task for BLE scanning
+    xTaskCreatePinnedToCore(
+        bleScanTask,           // Task function
+        "BLE Scan Task",       // Name of the task
+        4096,                  // Stack size 
+        NULL,                  // Parameter passed to the task
+        1,                     // Task priority
+        NULL,                  // Task handle - no need for now
+        1                      // Run Core 1
+    );
+
+    // Create the I2C slave task
+    xTaskCreatePinnedToCore(
+        i2cSlaveTask,          // Task function
+        "I2C Slave Task",      // Name of the task
+        2048,                  // Stack size in bytes
+        NULL,                  // Task input parameter
+        2,                     // Priority of the task
+        NULL,                  // Task handle
+        1                      // Run Core 1
+    );
 }
 
 void loop() {
-  BLEScanResults *foundDevices = pBLEScan->start(scanTime, false);
-  Serial.print("Devices found: ");
-  Serial.println(foundDevices->getCount());
-  Serial.println("Scan done!");
-  pBLEScan->clearResults();  // delete results from BLEScan buffer to release memory
-  delay(2000);
+    // Empty loop as tasks handle everything
 }

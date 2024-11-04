@@ -36,6 +36,9 @@ void AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice) {
       case MOKO_H4PRO:
         Serial.println("MOKO H4 PRO");
         parseMokoH4Pro(payload, payloadLength);
+      case MOKO_S02R:
+        Serial.println("MOKO S02R");
+        parseMokoTOF(payload, payloadLength);
         break;
       default:
         Serial.println("Unknown device type. No specific parsing function available.");
